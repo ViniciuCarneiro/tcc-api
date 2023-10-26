@@ -1,17 +1,33 @@
 const clienteModel = require('../models/clienteModel');
 
-// Função para buscar todos os clientes
 exports.getClientes = async (req, res) => {
   try {
-    const clientes = await clienteModel.getClientes();
-    res.status(200).json(clientes);
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+
+    const startIndex = (page - 1) * pageSize;
+
+    const query = 'SELECT * FROM cliente LIMIT ? OFFSET ?';
+    const queryParams = [pageSize, startIndex];
+
+    const clientes = await clienteModel.getClientes(query, queryParams);
+
+    if (clientes.length === 0) {
+      res.status(404).json({ message: 'Não há registros na página informada.' });
+    } else {
+      res.status(200).json({
+        message: 'Busca realizada com sucesso.',
+        page,
+        pageSize,
+        clientes,
+      });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erro ao buscar clientes.' });
   }
 };
 
-// Função para inserir um novo cliente
 exports.inserirCliente = async (req, res) => {
   const novoCliente = req.body;
   try {
@@ -24,12 +40,12 @@ exports.inserirCliente = async (req, res) => {
   }
 };
 
-// Função para atualizar um cliente existente
 exports.atualizarCliente = async (req, res) => {
-  const { id } = req.params;
+  const { clienteId } = req.params;
   const dadosAtualizados = req.body;
+
   try {
-    const clienteAtualizado = await clienteModel.atualizarCliente(id, dadosAtualizados);
+    const clienteAtualizado = await clienteModel.atualizarCliente(clienteId, dadosAtualizados);
     res.status(200).json(clienteAtualizado);
   } catch (error) {
     console.error(error);
@@ -37,14 +53,26 @@ exports.atualizarCliente = async (req, res) => {
   }
 };
 
-// Função para excluir um cliente
 exports.excluirCliente = async (req, res) => {
-  const { id } = req.params;
+  const { clienteId } = req.params;
   try {
-    await clienteModel.excluirCliente(id);
-    res.status(204).send();
+    await clienteModel.excluirCliente(clienteId);
+    const message = "Cliente inativado com sucesso!";
+    res.status(201).json({ message, clienteId });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erro ao excluir cliente.' });
+  }
+};
+
+exports.loginCliente = async (req, res) => {
+  const { usuario, senha } = req.body;
+
+  try {
+    const { token, cliente } = await clienteModel.loginCliente(usuario, senha);
+    res.status(200).json({ message: 'Login bem-sucedido', token, cliente });
+  } catch (error) {
+    console.error(error);
+    res.status(401).json({ error: 'Falha na autenticação' });
   }
 };

@@ -1,13 +1,13 @@
 const mysqlConfig = require('../config/mysql');
 
+const jwt = require('jsonwebtoken');
+
 const mysql = mysqlConfig({});
 const connection = mysql.getConnection();
 
-// Função para buscar todos os clientes
-exports.getClientes = () => {
+exports.getClientes = (query, queryParams) => {
   return new Promise((resolve, reject) => {
-    const query = 'SELECT * FROM cliente';
-    connection.query(query, (error, results) => {
+    connection.query(query, queryParams, (error, results) => {
       if (error) {
         reject(error);
       } else {
@@ -17,7 +17,6 @@ exports.getClientes = () => {
   });
 };
 
-// Função para inserir um novo cliente
 exports.inserirCliente = (novoCliente) => {
   return new Promise((resolve, reject) => {
     const query = 'INSERT INTO cliente SET ?';
@@ -31,10 +30,10 @@ exports.inserirCliente = (novoCliente) => {
   });
 };
 
-// Função para atualizar um cliente existente
 exports.atualizarCliente = (id, dadosAtualizados) => {
   return new Promise((resolve, reject) => {
     const query = 'UPDATE cliente SET ? WHERE id = ?';
+
     connection.query(query, [dadosAtualizados, id], (error, result) => {
       if (error) {
         reject(error);
@@ -49,10 +48,9 @@ exports.atualizarCliente = (id, dadosAtualizados) => {
   });
 };
 
-// Função para excluir um cliente
 exports.excluirCliente = (id) => {
   return new Promise((resolve, reject) => {
-    const query = 'DELETE FROM cliente WHERE id = ?';
+    const query = 'UPDATE cliente SET ativo = 0 WHERE id = ?';
     connection.query(query, [id], (error, result) => {
       if (error) {
         reject(error);
@@ -61,6 +59,32 @@ exports.excluirCliente = (id) => {
           reject(new Error('Cliente não encontrado.'));
         } else {
           resolve();
+        }
+      }
+    });
+  });
+};
+
+exports.loginCliente = (usuario, senha) => {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT * FROM cliente WHERE usuario = ? AND senha = ?';
+    connection.query(query, [usuario, senha], (error, results) => {
+      if (error) {
+        reject(error);
+      } else {
+        if (results.length === 1) {
+          const cliente = results[0];
+          const clienteToken = {
+            nome: cliente.nome,
+            sobrenome: cliente.sobrenome,
+            email: cliente.email,
+            whatsapp: cliente.whatsapp
+          }
+
+          const token = jwt.sign({ cliente: clienteToken }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+          resolve({ token });
+        } else {
+          reject(new Error('Credenciais inválidas'));
         }
       }
     });
