@@ -17,6 +17,25 @@ exports.getClientes = (query, queryParams) => {
   });
 };
 
+exports.getClienteById = (id) => {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT * FROM cliente WHERE id = ?';
+    const queryParams = [id];
+
+    connection.query(query, queryParams, (error, results) => {
+      if (error) {
+        reject(error);
+      } else {
+        if (results.length === 0) {
+          resolve(null);
+        } else {
+          resolve(results[0]);
+        }
+      }
+    });
+  });
+};
+
 exports.inserirCliente = (novoCliente) => {
   return new Promise((resolve, reject) => {
     const query = 'INSERT INTO cliente SET ?';

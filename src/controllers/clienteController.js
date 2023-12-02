@@ -7,10 +7,15 @@ exports.getClientes = async (req, res) => {
 
     const startIndex = (page - 1) * pageSize;
 
-    const query = 'SELECT * FROM cliente LIMIT ? OFFSET ?';
+    const query = 'SELECT * FROM cliente WHERE ativo = 1 LIMIT ? OFFSET ?';
     const queryParams = [pageSize, startIndex];
-
     const clientes = await clienteModel.getClientes(query, queryParams);
+
+    const countQuery = 'SELECT COUNT(*) AS totalCount FROM cliente WHERE ativo = 1';
+    const countResult = await clienteModel.getClientes(countQuery, []);
+
+    const totalCount = countResult[0].totalCount;
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     if (clientes.length === 0) {
       res.status(404).json({ message: 'Não há registros na página informada.' });
@@ -19,6 +24,7 @@ exports.getClientes = async (req, res) => {
         message: 'Busca realizada com sucesso.',
         page,
         pageSize,
+        totalPages,
         clientes,
       });
     }
@@ -28,12 +34,13 @@ exports.getClientes = async (req, res) => {
   }
 };
 
+
 exports.inserirCliente = async (req, res) => {
   const novoCliente = req.body;
   try {
     const clienteInserido = await clienteModel.inserirCliente(novoCliente);
     const message = "Cadastro realizado com sucesso!";
-    res.status(201).json({ message, clienteInserido });
+    res.status(201).json({ message, cliente: clienteInserido });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erro ao inserir cliente.' });
