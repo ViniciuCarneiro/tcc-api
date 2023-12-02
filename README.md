@@ -27,6 +27,12 @@ Certifique-se de ter [Node.js](https://nodejs.org/) instalado em sua máquina an
 
 3. Crie um arquivo `.env` na raiz do projeto e configure as variáveis de ambiente necessárias. Você pode seguir o exemplo do arquivo `.env.example`.
 
+4. Execute o script do banco de dados para criar as tabelas e definir a estrutura do banco:
+
+   ```bash
+   mysql -u SEU_USUARIO -p SUA_SENHA < script_banco.sql
+   ```
+
 ## Uso
 
 1. Inicie o servidor:
